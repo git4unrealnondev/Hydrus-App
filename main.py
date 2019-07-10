@@ -26,6 +26,8 @@ import requests
 import urllib.parse
 import os
 import re
+import concurrent.futures
+
 
 from queue import Queue
 
@@ -507,8 +509,11 @@ class SecondWindow(Screen):
 			ptags = re.sub('$','"]',ptags)
 			ptags = urllib.parse.quote(ptags.encode('utf-8'))
 
-			r = freeconnect(ip, 'get_files/search_files?system_inbox=true&system_archive=true', access_key, '&tags=' + ptags, False)
-			r = r.json()
+			future = executor.submit(freeconnect, ip, 'get_files/search_files?system_inbox=true&system_archive=true', access_key, '&tags=' + ptags, False)
+			print(future.result())
+
+			#r = freeconnect(ip, 'get_files/search_files?system_inbox=true&system_archive=true', access_key, '&tags=' + ptags, False)
+			r = future.json()
 	
 			List = r['file_ids']
 			if len(List) == 0:
@@ -600,6 +605,10 @@ class MyMainApp(App):
 
 
 if __name__ == "__main__":
-    MyMainApp().run()
+	executor = None
+
+	executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+
+	MyMainApp().run()
 
 #https://proxy.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%3Fid%3DOIP.ko1gn6b40NIt2aRjymUirgHaHa%26pid%3DApi&f=1
