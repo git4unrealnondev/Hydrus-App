@@ -10,7 +10,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button, ButtonBehavior
 from kivy.uix.label import Label
 from kivy.graphics.texture import Texture
-from kivy.garden.navigationdrawer import NavigationDrawer as ND
 from kivy.clock import Clock, mainthread
 from kivy.uix.image import AsyncImage
 from kivy.uix.recycleview import RecycleView
@@ -25,7 +24,10 @@ from kivy.config import ConfigParser
 from kivy.core.window import Window
 from kivy.uix.settings import Settings
 from kivy.modules import inspector
+from kivy.config import ConfigParser
 
+
+import sqlite3
 import threading
 import json
 import requests
@@ -127,7 +129,10 @@ Builder.load_string(
 					on_press:
 						root.Transition('Left')
 				Button:
-					opacity: 0
+					text: 'Back'
+					on_press:
+						app.root.current = 'second'
+						root.manager.transition.direction = 'right'
 				Button:
 					text: '->'
 					on_press:
@@ -147,23 +152,24 @@ Builder.load_string(
 	BoxLayout:
 		orientation: 'vertical'
 		BoxLayout:
-			size_hint: (1, .1)
+			orientation: 'horizontal'
+			height: 50
+			size_hint: (1, None)
 			opacity: 1
 			ImageButton:
-				keep_ratio: False
-				allow_stretch: True
-				size: self.parent.size
-				x: self.parent.width * .5 - self.width * .5
+				size: self.texture_size
+				size_hint: (None, None)
 				source: 'imgs/Hydrus3Bar.png'
-				size_hint: (.2, 1)
 				on_press:
 					root.label_change('navdrawer')
 			BoxLayout:
 				TextInput:
+					
 					id: Search
 					text: 'Search'
+					font_size: root.label_size
 					multiline: False
-					size_hint: (.8, 1)
+					write_tab: False
 					on_focus:
 						root.on_focus('search')
 		AnchorLayout:
@@ -199,7 +205,6 @@ Builder.load_string(
 			do_scroll_y: True
 			GridLayout:
 				row_default_height: 100
-				#col_default_width: 50
 				height: self.minimum_height
 				size_hint_y: None
 				padding: 5
@@ -298,27 +303,18 @@ Builder.load_string(
 	BoxLayout:
 		orientation: 'vertical'
 		BoxLayout:
-			canvas:
-				Color:
-					rgba: 74/225, 109/255, 186/255, .8 # Hydrus Blue
-				Rectangle:
-					pos: self.pos
-					size: self.size
-			size_hint: (1,.2)
-			BoxLayout:
-				size_hint: (.8, 1)
-				Button:
-					opacity: 0
-					
-			BoxLayout:
-				size_hint: (.2, 1)
+			size_hint: (1, None)
+			height: 50
+			orientation: 'horizontal'
+			
+			
+
+			AnchorLayout:
+				anchor_x: 'right'
 				ImageButton:
-					keep_ratio: False
-					allow_stretch: True
-					x: self.parent.width * .5 - self.width * .5
+					allow_stretch :True
+					keep_ratio: True
 					source: 'imgs/HydrusArrowR.png'
-					allow_stretch: True
-					size: self.parent.size
 					on_press:
 						app.root.current = 'second'
 						root.manager.transition.direction = 'left'
@@ -326,13 +322,25 @@ Builder.load_string(
 
 
 
-		BoxLayout:
-			size_hint: (1,.8)
-			Button:
-				hallign: 'center'
-				text: root.text
+		ScrollView:
+			do_scroll_x: False
+			do_scroll_y: True
+			GridLayout:
+				cols: 1
+				row_default_height: 100
+				height: self.minimum_height
+				size_hint_y: None
+				id: Scroll
 
 """)
+
+	#DONE make back button for fileview
+	#DONE "Search" text is too small
+	#DONE dont clear search text
+	#TODO MAKE SETTINGS ACTUALLY DO SOMTHING
+	#TODO make settings have option for default grid image spacer
+	#DONE MAKE TEXT USE SQLITE
+	#TODO make gridimgs use screenspace to find out how many collums to place
 
 def Blank(self, ins):
 		return
@@ -353,7 +361,11 @@ def DownloadFiles(self, url, List, Update, PassParams, ext):
 			
 			for each in List:
 				if StopThreads == True:
-					executor.cancel()
+					try:
+						executor.cancel()
+					except AttributeError:
+						print ('Fixed DownloadFiles Thread Stopper by making the thread error') 
+				
 					return
 				File = processes.append(executor.submit(DownloadFilesSlave(self, freeconnect, ip, url, access_key, each, True, Update, PassParams, ext)))
 		return filelist	
@@ -377,8 +389,6 @@ def DownloadFilesSlave(self, Func, ipaddr, page, key, eachvar , boolTF, Update, 
 		
 		if eachvar in self.listdl:
 			Update(self, PassParams[0], PassParams[1], PassParams[2])
-
-		
 
 def freeconnect(ip, page, key, tags, Check):
 	try:
@@ -416,8 +426,10 @@ class Grid(FloatLayout):
 class SettingsWindow(Screen):
 	text = 'Lazy Developer - Tell Me what you\nwant to edit\nin the settings\ni am a bad dev'
 	def load_content(self):
-		print ('Settings Window')
-
+		i = 0
+		while i < 25:
+			self.ids.Scroll.add_widget(Button(text='Saved Entry: ' + str(1), id=str(1)))
+			i += 1
 class FileViewImage(ButtonBehavior, Image): # This handles the Touch Events in FileView's main image
 	def on_touch_down(self, touch):
 		if self.collide_point(*touch.pos):
@@ -480,46 +492,62 @@ class FileView(Screen):
 	def test(self):
 		print ('ok')
 
+
+class data:
+	def __init__(self,dbname, **kwargs):
+		self.con=sqlite3.connect(dbname)
+	def __del__(self, **kwargs):
+		self.con.close()
+	def dbcommit(self, **kwargs):
+		self.con.commit()
+	def createtable(self, **kwargs):
+		self.con.execute('create table db(ind,w)')
+		self.dbcommit()
+
+	def GiveCon(self):
+		return self.con
+
+	def Execute(self, string, *argv):
+		for arg in argv:
+        		print ("another arg through *argv :", arg)
+		return self.con.execute(string)
+	def Write(self, string1, string2, *argv):
+		self.con.execute("""INSERT INTO 'StoredData' (IP, Key) VALUES (?, ?);""", (str(string1), str(string2)))
+		self.dbcommit()
+	def Close(self):
+		self.con.close()
+
 class MainWindow(Screen):
+
 	def readtxt(self):
-		Text = os.path.exists('txt')
-		if Text == False:
+		if os.path.exists('txt') == False:
 			os.makedirs('./txt/')
 			os.makedirs('./tmp/')
-			f = open("./txt/main.txt","w+")
-			f.write('')
-			f.close()
-			f = open("./txt/1.txt","w+")
-			f.write('')
-			f.close()
-			f = open("./txt/2.txt","w+")
-			f.write('')
-			f.close()
-			f = open("./txt/3.txt","w+")
-			f.write('')
-			f.close()
-			f = open("./txt/4.txt","w+")
-			f.write('')
-			f.close()
+			c = data('Everything.db')
+			data.Execute(c, '''CREATE TABLE StoredData (IP text, Key text)''')
+			data.Close(c)
 		else:
 			for child in [child for child in self.textlayout.children]:
-				print (child)
 				self.textlayout.remove_widget(child)
 			for child in [child for child in self.xtextlayout.children]:
-				print (child)
 				self.xtextlayout.remove_widget(child)
-			txtlst = ['main', '1', '2', '3', '4']
-			for each in txtlst:
-
-				b = os.path.getsize('txt/' + str(each) + '.txt')
-
-				f = open('txt/' + str(each) + '.txt', 'r')
-				read = f.read()
-				f.close()
-				if b > 0:
-					print (each + str(b))
-					self.textlayout.add_widget(Button(text='Saved Entry: ' + str(txtlst.index(each)), id='dynbtn' + str(txtlst.index(each)), on_press=self.pressed))
-					self.xtextlayout.add_widget(Button(text='X', on_press=self.Delete, id='dynbtn' + str(txtlst.index(each))))
+		c = data('Everything.db')
+		conn = data.GiveCon(c)
+		cur = conn.cursor()
+		List = cur.execute("select * from StoredData").fetchall() # Connects To Everything.db and pulls IP's and ther accesskeys
+		IPS = cur.execute("select IP from StoredData").fetchall()
+		KEYS = cur.execute("select Key from StoredData").fetchall()
+		print ('List ',len (List))
+		print ('IPS',IPS)
+		print ('KEYS',KEYS)
+		data.Close(c)
+		cnt = 0
+		while cnt < len(List):
+			print (cnt)
+			self.textlayout.add_widget(Button(text='Saved Entry: ' + str(IPS[cnt][0]), id=str(cnt), on_press=self.pressed))
+			self.xtextlayout.add_widget(Button(text='X', on_press=self.Delete, id=str(cnt)))
+			cnt += 1
+		return
 				
 	def connect(self, event):
 		self.event = event
@@ -536,20 +564,24 @@ class MainWindow(Screen):
 			r = json.loads(r.content)
 			access_key = r['access_key']
 			txtlst = ['main', '1', '2', '3', '4']
-			for each in txtlst:
-				e = os.path.getsize('txt/' + str(each) + '.txt')
-				f = open('txt/' + str(each) + '.txt', 'a')
-				if e > 0:
-					print (each + 't')
-					test = Button(text='Saved Entry: ' + str(txtlst.index(each)))
-					test.bind(on_press=self.pressed)
-					self.add_widget(test)
-					f.close()
-				else:
-					f.write(self.ipinput.text + ', ' + access_key)
-					print (each)
-					f.close()
-					break
+
+			c = data('Everything.db')
+			data.Write(c, str(self.ipinput.text), access_key)
+			data.Close(c)
+			#for each in txtlst:
+			#	e = os.path.getsize('txt/' + str(each) + '.txt')
+			#	f = open('txt/' + str(each) + '.txt', 'a')
+			#	if e > 0:
+			#		print (each + 't')
+			#		test = Button(text='Saved Entry: ' + str(txtlst.index(each)))
+			#		test.bind(on_press=self.pressed)
+			#		self.add_widget(test)
+			#		f.close()
+			#	else:
+			#		f.write(self.ipinput.text + ', ' + access_key)
+			#		print (each)
+			#		f.close()
+			#		break
 		else:
 			makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Please goto  Services->Review->Client-API \n Click Add -> From API request and try again.')
 			return
@@ -558,23 +590,17 @@ class MainWindow(Screen):
 		sm.transition.direction = 'up'
 
 	def Delete(self, instance):
-		self.instance = instance
-		if instance.id == 'dynbtn0':
-			act = 'main'
-		if instance.id == 'dynbtn1':
-			act = '1'
-		if instance.id == 'dynbtn2':
-			act = '2'
-		if instance.id == 'dynbtn3':
-			act = '3'
-		if instance.id == 'dynbtn4':
-			act = '4'
-		try:
-			os.remove('txt/'+act+'.txt')
-		except FileNotFoundError:
-			print ('File' + act + 'Not Found')
-		file = open('txt/'+act+'.txt', 'w+')
-		file.close()
+		c = data('Everything.db')
+		conn = data.GiveCon(c)
+		cur = conn.cursor()
+		List = cur.execute("select * from StoredData").fetchall() # Connects To Everything.db and pulls IP's and ther accesskeys
+		IPS = cur.execute("select IP from StoredData").fetchall()
+		KEYS = cur.execute("select Key from StoredData").fetchall()
+		key = str(KEYS[NumDelete][0])
+		cur.execute("DELETE FROM StoredData WHERE Key = (?)", (str(KEYS[int(instance.id)][0]),))
+		data.dbcommit(c)
+		data.Close(c)
+
 		self.textlayout.clear_widgets(children=None)
 		MainWindow.readtxt(self)
 
@@ -582,26 +608,18 @@ class MainWindow(Screen):
 		self.instance = instance
 		global access_key
 		global ip
-		if instance.id == 'dynbtn0':
-			act = 'main'
-		if instance.id == 'dynbtn1':
-			act = '1'
-		if instance.id == 'dynbtn2':
-			act = '2'
-		if instance.id == 'dynbtn3':
-			act = '3'
-		if instance.id == 'dynbtn4':
-			act = '4'
-		f = open('txt/' + str(act) + '.txt', 'r')
+		c = data('Everything.db')
+		conn = data.GiveCon(c)
+		cur = conn.cursor()
+		IPS = cur.execute("select IP from StoredData").fetchall()
+		KEYS = cur.execute("select Key from StoredData").fetchall()
+		data.Close(c)
 
-		read = f.read()
-		ip = read.split(',', 1)[0]  # maxsplit = 1;
-		ak = read.split(',', 1)[1]  # maxsplit = 1;
-		ak = ak.replace("\n", "")
-		ak = ak.replace(" ", "")
-		access_key = ak
+		ip = IPS[int(instance.id)][0]
+		access_key = KEYS[int(instance.id)][0]
+
 		try:
-			r = freeconnect(ip, 'verify_access_key', access_key, '', False)
+			r = freeconnect(IPS[int(instance.id)][0], 'verify_access_key', KEYS[int(instance.id)][0], '', False)
 		except:
 			makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Please check if API KEY is valid \n Hydrus keys expire every 24 hrs')
 			return
@@ -628,6 +646,8 @@ class SecondWindow(Screen):
 	lbl3 = ObjectProperty(None)
 	ConnSuccessful = False
 	Offset = 0
+	OneTrigger = True
+	label_size = int(15)
 	LocalFiles = []
 	listdl = []
 	def triggerexit(self, event):
@@ -799,9 +819,10 @@ class SecondWindow(Screen):
 			SecondWindow.StartFileSearchThread(self)
 			SecondWindow.StartFileShowThread(self)
 		else:
+			if self.OneTrigger == True:
+				self.search.text = ''
 			SecondWindow.IsFocused = True
-			self.search.text = ''
-        #print (SecondWindow.test) # Debugging for clicking in search bar
+			self.OneTrigger = False
 
 	def load_content(self): # Used for drawing Images
 		maingrid = self.maingrid
@@ -864,6 +885,9 @@ sm.add_widget(SettingsWindow(name='setting'))
 
 
 class MyMainApp(App):
+	search_font_size = int(30)
+
+
 	def on_stop(self):
 		global StopThreads
 		StopThreads = True
@@ -879,5 +903,3 @@ if __name__ == "__main__":
 	global ThreadList
 	ThreadList = []
 	MyMainApp().run()
-
-#https://proxy.duckduckgo.com/iu/?u=https%3A%2F%2Ftse2.mm.bing.net%2Fth%3Fid%3DOIP.ko1gn6b40NIt2aRjymUirgHaHa%26pid%3DApi&f=1

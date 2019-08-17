@@ -10,7 +10,7 @@ package.name = HydrusInteractive
 package.domain = org.hydrus
 
 # (str) Source code where the main.py live
-source.dir = .
+source.dir = ./
 
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas
@@ -51,7 +51,7 @@ requirements = python3,kivy,requests
 #presplash.filename = %(source.dir)s/data/presplash.png
 
 # (str) Icon of the application
-icon.filename = %(source.dir)s/imgs/logo.png
+#icon.filename = %(source.dir)s/data/icon.png
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
 orientation = portrait
@@ -84,7 +84,7 @@ fullscreen = 1
 # red, blue, green, black, white, gray, cyan, magenta, yellow, lightgray,
 # darkgray, grey, lightgrey, darkgrey, aqua, fuchsia, lime, maroon, navy,
 # olive, purple, silver, teal.
-#android.presplash_color = black
+android.presplash_color = black
 
 # (list) Permissions
 #android.permissions = INTERNET
@@ -93,15 +93,15 @@ fullscreen = 1
 android.api = 29
 
 # (int) Minimum API your APK will support.
-android.minapi = 21
+android.minapi = 22
 # (int) Android SDK version to use
-#android.sdk = 21
+android.sdk = 22
 
 # (str) Android NDK version to use
 android.ndk = 17c
 #17c
 # (int) Android NDK API to use. This is the minimum API your app will support, it should usually match android.minapi.
-android.ndk_api = 21
+android.ndk_api = 22
 
 # (bool) Use --private data storage (True) or --dir public storage (False)
 #android.private_storage = True
