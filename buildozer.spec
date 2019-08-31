@@ -28,7 +28,7 @@ source.exclude_dirs = tests, bin, tmp, txt
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 0.121
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -87,7 +87,7 @@ fullscreen = 1
 #android.presplash_color = black
 
 # (list) Permissions
-#android.permissions = INTERNET
+android.permissions = INTERNET
 
 # (int) Target Android API, should be as high as possible.
 android.api = 29
@@ -199,7 +199,7 @@ android.ndk_api = 21
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86
-android.arch = armeabi-v7a
+android.arch = x86
 
 #
 # Python for android (p4a) specific

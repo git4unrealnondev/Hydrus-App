@@ -25,7 +25,8 @@ from kivy.core.window import Window
 from kivy.uix.settings import Settings
 from kivy.modules import inspector
 from kivy.config import ConfigParser
-
+from kivy.uix.slider import Slider
+from kivy.uix.widget import Widget
 
 import sqlite3
 import threading
@@ -332,6 +333,7 @@ Builder.load_string(
 				size_hint_y: None
 				id: Scroll
 
+
 """)
 
 	#DONE make back button for fileview
@@ -345,6 +347,10 @@ Builder.load_string(
 def Blank(self, ins):
 		return
 
+class SettingsSlider(Widget):
+	text = ''
+	key = 5
+	pass
 def DownloadFiles(self, url, List, Update, PassParams, ext):
 	global StopThreads
 	filelist = []
@@ -425,11 +431,23 @@ class Grid(FloatLayout):
 
 class SettingsWindow(Screen):
 	text = 'Lazy Developer - Tell Me what you\nwant to edit\nin the settings\ni am a bad dev'
+	ScrollList = []
+
 	def load_content(self):
-		i = 0
-		while i < 25:
-			self.ids.Scroll.add_widget(Button(text='Saved Entry: ' + str(1), id=str(1)))
-			i += 1
+		c = data('Everything.db')
+		Names = data.Execute(c, "select SettingName from Settings")
+		Literals = data.Execute(c, "select Literal from Settings")
+		Keys = data.Execute(c, "select Key from Settings")
+		cnt = 0
+		print ('test',Keys)
+		for each in Keys:
+			#ref = SettingsSlider()
+			#ref.key = each[0]
+			#ref.text = each[0]
+			#print (ref.key)
+			#ref = self.ids.Scroll.add_widget(SettingsSlider(id='test'))
+			#self.ids.Scroll.add_widget(Button(text='Saved Entry: ' + str(each), id=str(1)))
+			cnt += 1
 class FileViewImage(ButtonBehavior, Image): # This handles the Touch Events in FileView's main image
 	def on_touch_down(self, touch):
 		if self.collide_point(*touch.pos):
@@ -511,6 +529,10 @@ class data:
 		for arg in argv:
         		print ("another arg through *argv :", arg)
 		return self.con.execute(string)
+
+	def WriteSettings(self, string1, string2, string3, *argv):
+		self.con.execute("""INSERT INTO 'Settings' (SettingName, Literal, Key) VALUES (?, ?, ?);""", (str(string1), str(string2), str(string3)))
+		self.dbcommit()
 	def Write(self, string1, string2, *argv):
 		self.con.execute("""INSERT INTO 'StoredData' (IP, Key) VALUES (?, ?);""", (str(string1), str(string2)))
 		self.dbcommit()
@@ -518,13 +540,14 @@ class data:
 		self.con.close()
 
 class MainWindow(Screen):
-
 	def readtxt(self):
 		if os.path.exists('txt') == False:
 			os.makedirs('./txt/')
 			os.makedirs('./tmp/')
 			c = data('Everything.db')
 			data.Execute(c, '''CREATE TABLE StoredData (IP text, Key text)''')
+			data.Execute(c, '''CREATE TABLE Settings (SettingName text, Literal text, Key test)''')
+			data.WriteSettings(c, 'GridNum', 'FALSE', '3')
 			data.Close(c)
 		else:
 			for child in [child for child in self.textlayout.children]:
@@ -564,24 +587,9 @@ class MainWindow(Screen):
 			r = json.loads(r.content)
 			access_key = r['access_key']
 			txtlst = ['main', '1', '2', '3', '4']
-
 			c = data('Everything.db')
 			data.Write(c, str(self.ipinput.text), access_key)
 			data.Close(c)
-			#for each in txtlst:
-			#	e = os.path.getsize('txt/' + str(each) + '.txt')
-			#	f = open('txt/' + str(each) + '.txt', 'a')
-			#	if e > 0:
-			#		print (each + 't')
-			#		test = Button(text='Saved Entry: ' + str(txtlst.index(each)))
-			#		test.bind(on_press=self.pressed)
-			#		self.add_widget(test)
-			#		f.close()
-			#	else:
-			#		f.write(self.ipinput.text + ', ' + access_key)
-			#		print (each)
-			#		f.close()
-			#		break
 		else:
 			makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Please goto  Services->Review->Client-API \n Click Add -> From API request and try again.')
 			return
@@ -650,6 +658,7 @@ class SecondWindow(Screen):
 	label_size = int(15)
 	LocalFiles = []
 	listdl = []
+
 	def triggerexit(self, event):
 		global StopThreads
 		global ThreadList
