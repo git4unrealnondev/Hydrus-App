@@ -215,6 +215,16 @@ class SettingsWindow(Screen):
 		return settingsList[numone][numtwo]
 
 	def reloadSettings(self):
+
+		if not os.path.isfile('Everything.db'):
+			os.makedirs('./tmp/')
+			c = data('Everything.db')
+			c.Execute( '''CREATE TABLE StoredData (IP text, Key text)''')
+			c.Execute( '''CREATE TABLE Settings (SettingName text, Literal text, Key test, toolTips text)''')
+			c.WriteSettings('GridNum', 'FALSE', '3', 'maingrids item number width')
+			c.dbcommit()
+			c.Close()
+
 		print ('RELOAD SETTINGS')
 		global settingsList
 		c = data('Everything.db')
@@ -339,19 +349,21 @@ class data:
 
 class MainWindow(Screen):
 	def readtxt(self):
-		if os.path.exists('txt') == False:
-			os.makedirs('./txt/')
-			os.makedirs('./tmp/')
-			c = data('Everything.db')
-			data.Execute(c, '''CREATE TABLE StoredData (IP text, Key text)''')
-			data.Execute(c, '''CREATE TABLE Settings (SettingName text, Literal text, Key test, toolTips text)''')
-			data.WriteSettings(c, 'GridNum', 'FALSE', '3', 'maingrids item number width')
-			data.Close(c)
-		else:
-			for child in [child for child in self.textlayout.children]:
-				self.textlayout.remove_widget(child)
-			for child in [child for child in self.xtextlayout.children]:
-				self.xtextlayout.remove_widget(child)
+		#if os.path.exists('txt') == False:
+		#	print ('wasd')
+		#	os.makedirs('./txt/')
+		#	os.makedirs('./tmp/')
+		#	c = data('Everything.db')
+		#	c.Execute( '''CREATE TABLE StoredData (IP text, Key text)''')
+		#	c.Execute( '''CREATE TABLE Settings (SettingName text, Literal text, Key test, toolTips text)''')
+		#	c.WriteSettings('GridNum', 'FALSE', '3', 'maingrids item number width')
+		#	c.dbcommit()
+		#	c.Close()
+		#else:
+		for child in [child for child in self.textlayout.children]:
+			self.textlayout.remove_widget(child)
+		for child in [child for child in self.xtextlayout.children]:
+			self.xtextlayout.remove_widget(child)
 		c = data('Everything.db')
 		conn = data.GiveCon(c)
 		cur = conn.cursor()
