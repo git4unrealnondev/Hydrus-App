@@ -28,7 +28,7 @@ source.exclude_dirs = tests, bin, tmp, txt
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.121
+version = 0.122
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -36,7 +36,7 @@ version = 0.121
 
 # (list) Application requirements
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,requests
+requirements = python3,kivy
 
 #android.ndk_path = ~/.buildozer/crystax-ndk
 #android.ndk = 10.3.2

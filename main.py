@@ -18,7 +18,7 @@ from kivy.properties import ObjectProperty
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from kivy.uix.popup import Popup
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, NumericProperty
 from kivy.network.urlrequest import UrlRequest
 from kivy.config import ConfigParser
 from kivy.core.window import Window
@@ -27,11 +27,11 @@ from kivy.modules import inspector
 from kivy.config import ConfigParser
 from kivy.uix.slider import Slider
 from kivy.uix.widget import Widget
+from kivy.graphics import Color, Rectangle
 
 import sqlite3
 import threading
-import json
-import requests
+#import json
 import urllib.parse
 import os
 import re
@@ -41,300 +41,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from queue import Queue
 
 #http://127.0.0.1:45869
-
-Builder.load_string(
-"""
-<MainWindow>:
-	ipinput: IPinput
-	textlayout: textlayout
-	xtextlayout: xtextlayout
-	on_pre_enter:
-		root.readtxt()
-	canvas:
-		Color:
-			rgb: 0,0,0
-		Rectangle:
-			#rgba: 1,1,1,1
-			#source: 'imgs/bk.png'
-			size: self.size
-	BoxLayout:
-
-		orientation: 'vertical'
-		background_normal: ''
-		background_color: 0, 1, 0, 1
-		AnchorLayout:
-			anchor_x: 'center'
-			anchor_y: 'top'
-			padding: [25, 10, 25 ,10]
-
-			GridLayout:
-				size_hint: (.5, .25)
-				cols:1
-				GridLayout:
-
-					cols: 2
-					Label:
-						background_color: (1.0, 0.0, 0.0, 1.0)
-						text: 'IP: '
-					TextInput:
-						id: IPinput
-						text: '127.0.0.1'
-						multiline: False
-				Button:
-
-					text: 'Submit'
-					on_press:
-						root.connect('ipinput')
-
-
-
-
-		GridLayout:
-			cols: 1
-			AnchorLayout:
-				anchor_x: 'center'
-				anchor_y: 'center'
-				padding: [25, 10, 25 ,10]
-				BoxLayout:
-					GridLayout:
-						size_hint: .8, .2
-						id: textlayout
-						cols: 1
-					GridLayout
-						size_hint: .2, .2
-						id: xtextlayout
-						cols: 1
-
-<FileView>:
-	on_pre_enter:
-		root.load_content()
-	imageref: image
-	ScrollView:
-		do_scroll_x: False
-		do_scroll_y: True
-		GridLayout:
-			cols: 1
-			size_hint_y: None
-			height: self.minimum_height
-			row_default_height: '40dp'
-			FileViewImage:
-				size_hint: 1, None
-				width: root.width
-				height: self.width / self.image_ratio
-				size: self.size
-				id: image				
-			BoxLayout:
-
-				Button:
-					text: '<-'
-					on_press:
-						root.Transition('Left')
-				Button:
-					text: 'Back'
-					on_press:
-						app.root.current = 'second'
-						root.manager.transition.direction = 'right'
-				Button:
-					text: '->'
-					on_press:
-						root.Transition('Right')
-			
-<SecondWindow>:
-	label: btn1
-	navdrawer: navdrawer
-	maingrid: maingrid
-	search: Search
-	close_navdrawer: close_navdrawer
-	lbl1: lbl1
-	lbl3: lbl3
-	searching: searching
-	on_pre_enter:
-		root.load_content()
-	BoxLayout:
-		orientation: 'vertical'
-		BoxLayout:
-			orientation: 'horizontal'
-			height: 50
-			size_hint: (1, None)
-			opacity: 1
-			ImageButton:
-				size: self.texture_size
-				size_hint: (None, None)
-				source: 'imgs/Hydrus3Bar.png'
-				on_press:
-					root.label_change('navdrawer')
-			BoxLayout:
-				TextInput:
-					
-					id: Search
-					text: 'Search'
-					font_size: root.label_size
-					multiline: False
-					write_tab: False
-					on_focus:
-						root.on_focus('search')
-		AnchorLayout:
-			anchor_x: 'center'
-			size_hint: (1, .1)
-			BoxLayout:
-				spacing: 20
-				padding: (10,1,10,1)
-				Button:
-					text: ' <- '
-					on_press:
-						root.IncrementPage('Left')
-				Label:
-					id: lbl1
-					size_hint: (.25,1)
-					text: '0'
-				Label:
-					id: lbl2
-					size_hint: (.25,1)
-					text: '-'
-				Label:
-					id: lbl3
-					size_hint: (.25,1)
-					text: '0'
-				Button:
-					text: ' -> '
-					on_press:
-						root.IncrementPage('Right')
-
-		ScrollView:
-			size_hint: 1,.8
-			do_scroll_x: False
-			do_scroll_y: True
-			GridLayout:
-				row_default_height: 100
-				height: self.minimum_height
-				size_hint_y: None
-				padding: 5
-				cols: 3
-				spacing: (5,5)
-				id: maingrid
-
-		Button:
-			size_hint: 1,.1
-			id: btn1
-			text: 'Logout'
-			on_release:
-				root.label_change('btn1')
-				app.root.current = 'main'
-				root.manager.transition.direction = 'down'
-
-
-	AnchorLayout:
-		anchor_x: 'center'
-		anchor_y: 'center'
-		id: searching
-		size_hint: (0,0)
-		BoxLayout:
-			size_hint: (.3, .15)
-			canvas:
-				Color:
-					rgba: 74/225, 109/255, 186/255, .8 # Hydrus Blue
-				Rectangle:
-					pos: self.pos
-					size: self.size
-			Button:
-				background_normal: ''
-				background_color: 0,0,0,0
-
-				halign: 'center'
-				text: 'Searching (This Is Static)'
-				
-				
-					
-	FloatLayout:
-		AnchorLayout:
-			anchor_x: 'left'
-			anchor_y: 'center'
-			ScrollView:
-				id: navdrawer
-				size_hint: (0, 1)
-				do_scroll_x: False
-				do_scroll_y: True
-
-                BoxLayout:
-
-                    size_hint: (1, 1)
-                    canvas:
-                        Color:
-                            rgba: 74/225, 109/255, 186/255, .8 # Hydrus Blue
-                        Rectangle:
-                            pos: self.pos
-                            size: self.size
-                    AnchorLayout:
-                        anchor_y: 'top'
-                        BoxLayout:
-                            size_hint: (1, .75)
-                            orientation: 'vertical'
-                            Button:
-                                size_hint: (1, .1)
-                                text: 'Settings'
-                                on_release:
-                                    app.root.current = 'setting'
-                                    root.manager.transition.direction = 'right'
-                            Button:
-                                size_hint: (1, .1)
-                                text: 'test1'
-                                on_press:
-                            Button:
-                                size_hint: (1, .1)
-                                text: 'test1'
-                                on_press:
-                            Button:
-                                size_hint: (1, .1)
-                                text: 'Exit'
-                                on_press:
-                                    root.triggerexit('exit')
-		AnchorLayout:
-			anchor_x: 'right'
-			anchor_y: 'center'
-			Button:
-				id: close_navdrawer
-				opacity: 0
-				text: 'TEST'
-				size_hint: (0, 1)
-				on_press:
-					root.label_change('close_navdrawer')
-<SettingsWindow>:
-	on_pre_enter:
-		root.load_content()
-	BoxLayout:
-		orientation: 'vertical'
-		BoxLayout:
-			size_hint: (1, None)
-			height: 50
-			orientation: 'horizontal'
-			
-			
-
-			AnchorLayout:
-				anchor_x: 'right'
-				ImageButton:
-					allow_stretch :True
-					keep_ratio: True
-					source: 'imgs/HydrusArrowR.png'
-					on_press:
-						app.root.current = 'second'
-						root.manager.transition.direction = 'left'
-
-
-
-
-		ScrollView:
-			do_scroll_x: False
-			do_scroll_y: True
-			GridLayout:
-				cols: 1
-				row_default_height: 100
-				height: self.minimum_height
-				size_hint_y: None
-				id: Scroll
-
-
-""")
 
 	#DONE make back button for fileview
 	#DONE "Search" text is too small
@@ -348,60 +54,121 @@ def Blank(self, ins):
 		return
 
 class SettingsSlider(Widget):
-	text = ''
-	key = 5
-	pass
-def DownloadFiles(self, url, List, Update, PassParams, ext):
+	text = StringProperty()
+	key = NumericProperty()
+	SliderValue = NumericProperty()
+	def __init__(self, text, key):
+		super(SettingsSlider, self).__init__()
+		self.text = text
+		self.key = key
+	def sliderUpdate(self, sliderRef):
+		self.SliderValue = sliderRef.value
+		#print(sliderRef.value, "slider value")
+		datacon = data("Everything.db")
+		cur = datacon.GiveCon()
+		cur.execute("""UPDATE 'Settings' SET Key = ? WHERE SettingName = ?""", (int(sliderRef.value), self.text))
+		
+		datacon.dbcommit()
+		del datacon
+
+		SettingsWindow.reloadSettings(self)
+
+def DownloadFiles(self, url, List, Update, PassParams, ext, currentOffset):
 	global StopThreads
+	global access_key
+
+	cnt = 0
+	if currentOffset != -1:
+		self.DLoader = self
 	filelist = []
 	try:
 		maingrid = self.maingrid
+
+		print('currentoffset', currentOffset, 'Self Offset', self.Offset)
+
 	except AttributeError:
-		print ('Download Files self is not SecondWindo')
-	print (self, url, List, Update, PassParams, ext)
+
+		# This should only happen when grid imgs dont need to be updated.
+		print ('Download Files self is not SecondWindow')
+		headers = {'Hydrus-Client-API-Access-Key': str(access_key)}
+		r = UrlRequest('http://' + str(ip) + ':45869' + '/' + str(url) + str(List[0]), req_headers=headers,  timeout=5, file_path='tmp/' + str(List[0]) + str(ext),on_failure=MainWindow.connectFailure, on_error=MainWindow.connectError)
+		r.wait()
+		return
 	if not List:
 		return
-	else:
-		processes = []
-		with ThreadPoolExecutor(max_workers=20) as executor:
-			
-			for each in List:
-				if StopThreads == True:
-					try:
-						executor.cancel()
-					except AttributeError:
-						print ('Fixed DownloadFiles Thread Stopper by making the thread error') 
+
+	cnt = 0
+
+	for each in List:
+		headers = {'Hydrus-Client-API-Access-Key': str(access_key)}
+		r = UrlRequest('http://' + str(ip) + ':45869' + '/' + str(url) + str(each), req_headers=headers,  timeout=5, file_path='tmp/' + str(each) + str(ext),on_failure=MainWindow.connectFailure, on_error=MainWindow.connectError)
+		r.wait()
+		valid = True
+		#if cnt >= 50:
+		#	print ('cnt over 50')
+		#	valid = False #Stops any infinite loops
+		#	return
+		#print ('GRID IMGS UPDATE LISTDL',self.listdl,' two: ',two)
+		#while SecondWindow.childs[49-cnt].source == 'imgs/bk.png':
+		while valid:
+			if cnt >= 50:
+				print ('DLFILES BREAK')
+				break
+			if SecondWindow.childs[49-cnt].source == 'imgs/bk.png':
+				#print (one,SecondWindow.childs[cnt])
+				print ('Update')
+				SecondWindow.UpdateImage('tmp/'+str(each)+str(ext), cnt)	
+				#print ('set Child Source')
 				
-					return
-				File = processes.append(executor.submit(DownloadFilesSlave(self, freeconnect, ip, url, access_key, each, True, Update, PassParams, ext)))
-		return filelist	
-def DownloadFilesSlave(self, Func, ipaddr, page, key, eachvar , boolTF, Update, PassParams, ext):
-	print ('DL Post ID: ' + str(eachvar))
-	File = Func(ipaddr, page, key, eachvar, boolTF)
-	print ('tmp/' + str(eachvar) + str(ext))
-	img = open('tmp/' + str(eachvar) + str(ext), 'wb')
-	img.write(File.content)
-	img.close()
-	time.sleep(.5)
-	if Update == None:
-		print ('update==none')
-	else:
-		Load = PassParams[0]
-		PassParams.clear()
-		PassParams.append(int(eachvar))
-		PassParams.append(Load)
-		PassParams.append('')	
-		Load = ''	
-		
-		if eachvar in self.listdl:
-			Update(self, PassParams[0], PassParams[1], PassParams[2])
+				valid = False
+			cnt += 1
+	#print (self, url, List, Update, PassParams, ext)
+	#if not List:
+	#	return
+	#else:
+	#	processes = []
+	#	with ThreadPoolExecutor(max_workers=20) as executor:
+	#		
+	#		for each in List:
+	#			if StopThreads == True:
+	#				try:
+	#					executor.cancel()
+	#				except AttributeError:
+	#					print ('Fixed DownloadFiles Thread Stopper by making the thread error') 
+	#			
+	#				return
+	#			File = processes.append(executor.submit(DownloadFilesSlave(self, freeconnect, ip, url, access_key, each, True, Update, PassParams, ext)))
+	#	return filelist	
+
+#def DownloadFilesSlave(self, Func, ipaddr, page, key, eachvar , boolTF, Update, PassParams, ext):
+#	print ('DL Post ID: ' + str(eachvar))
+#	File = Func(ipaddr, page, key, eachvar, boolTF)
+#	print ('tmp/' + str(eachvar) + str(ext))
+#	img = open('tmp/' + str(eachvar) + str(ext), 'wb')
+#	img.write(File.content)
+#	img.close()
+#	time.sleep(.5)
+#	if Update == None:
+#		print ('update==none')
+#	else:
+#		Load = PassParams[0]
+#		PassParams.clear()
+#		PassParams.append(int(eachvar))
+#		PassParams.append(Load)
+#		PassParams.append('')	
+#		Load = ''	
+#		if eachvar in self.listdl:
+#			Update(self, PassParams[0], PassParams[1], PassParams[2])
 
 def freeconnect(ip, page, key, tags, Check):
 	try:
 		headers = {'Hydrus-Client-API-Access-Key': str(key)}
 		print ('http://' + str(ip) + ':45869' + '/' + str(page) + str(tags))
-		r = requests.get('http://' + str(ip) + ':45869' + '/' + str(page) + str(tags), headers=headers)
 
+		r = UrlRequest('http://' + str(ip) + ':45869' + '/' + str(page) + str(tags), req_headers=headers,  timeout=5, on_failure=connectFailure, on_error=connectError)
+		r.wait()
+		#r = requests.get('http://' + str(ip) + ':45869' + '/' + str(page) + str(tags), headers=headers)
+		print ('rdone')
 	except:
 		if not Check == True:
 			print ('check != True')
@@ -414,6 +181,14 @@ def freeconnect(ip, page, key, tags, Check):
 			return r
 	return r
 
+# Handles FreeConnect Errors
+def connectError():
+	print ('connecterror')
+def connectFailure():
+	print('connectfail')
+
+#def freeconnectPassthrough(self, *args):
+	
 def makepopup(title, text):
 	box = BoxLayout(orientation = 'vertical', padding = (10))
 	box.add_widget(Label(text = text, halign = 'center', size_hint_y=None, font_size=(11)))
@@ -433,21 +208,44 @@ class SettingsWindow(Screen):
 	text = 'Lazy Developer - Tell Me what you\nwant to edit\nin the settings\ni am a bad dev'
 	ScrollList = []
 
-	def load_content(self):
+	def pickSettings(self, numone, numtwo):
+		global settingsList
+		if numtwo == None:
+			return settingsList[numone]
+		return settingsList[numone][numtwo]
+
+	def reloadSettings(self):
+		print ('RELOAD SETTINGS')
+		global settingsList
 		c = data('Everything.db')
-		Names = data.Execute(c, "select SettingName from Settings")
-		Literals = data.Execute(c, "select Literal from Settings")
-		Keys = data.Execute(c, "select Key from Settings")
+		Names = data.Execute(c, "select SettingName from Settings").fetchall()
+		Literals = data.Execute(c, "select Literal from Settings").fetchall()
+		Keys = data.Execute(c, "select Key from Settings").fetchall()
+		toolTips = data.Execute(c, "select toolTips from Settings").fetchall()
+		settingsList = []
+		settingsList.append(Names)
+		settingsList.append(Literals)
+		settingsList.append(Keys)
+		settingsList.append(toolTips)
+		return
+
+	def load_content(self):
 		cnt = 0
-		print ('test',Keys)
-		for each in Keys:
-			#ref = SettingsSlider()
-			#ref.key = each[0]
-			#ref.text = each[0]
-			#print (ref.key)
-			#ref = self.ids.Scroll.add_widget(SettingsSlider(id='test'))
-			#self.ids.Scroll.add_widget(Button(text='Saved Entry: ' + str(each), id=str(1)))
+		SettingsWindow.reloadSettings(self)
+		Names = SettingsWindow.pickSettings(self, 0, None)
+		Literal = SettingsWindow.pickSettings(self, 1, None)
+		Keys = SettingsWindow.pickSettings(self, 2, None)
+
+		# Clears settings scrollwheel from children
+		self.ids.Scroll.clear_widgets(children=None)
+
+		for each in Names:
+			print ('load_content', cnt, each[0])
+			slider = SettingsSlider(Names[cnt][0], Keys[cnt][0])
+			print (slider.text, 'slider text')
+			self.ids.Scroll.add_widget(slider)
 			cnt += 1
+
 class FileViewImage(ButtonBehavior, Image): # This handles the Touch Events in FileView's main image
 	def on_touch_down(self, touch):
 		if self.collide_point(*touch.pos):
@@ -493,7 +291,7 @@ class FileView(Screen):
 		else:
 			List = []
 			List.append(FileID)
-			DownloadFiles(FileView, 'get_files/file?file_id=',List, None, '', '.image')
+			DownloadFiles(FileView, 'get_files/file?file_id=',List, None, '', '.image', -1)
 			self.imageref.source = 'tmp/' + FileID + '.image'
 			x,y = Window.size
 			print ('Image Ratio ',str(self.imageref.image_ratio), 'Window Size', str(Window.size))
@@ -512,7 +310,7 @@ class FileView(Screen):
 
 
 class data:
-	def __init__(self,dbname, **kwargs):
+	def __init__(self, dbname, **kwargs):
 		self.con=sqlite3.connect(dbname)
 	def __del__(self, **kwargs):
 		self.con.close()
@@ -546,8 +344,8 @@ class MainWindow(Screen):
 			os.makedirs('./tmp/')
 			c = data('Everything.db')
 			data.Execute(c, '''CREATE TABLE StoredData (IP text, Key text)''')
-			data.Execute(c, '''CREATE TABLE Settings (SettingName text, Literal text, Key test)''')
-			data.WriteSettings(c, 'GridNum', 'FALSE', '3')
+			data.Execute(c, '''CREATE TABLE Settings (SettingName text, Literal text, Key test, toolTips text)''')
+			data.WriteSettings(c, 'GridNum', 'FALSE', '3', 'maingrids item number width')
 			data.Close(c)
 		else:
 			for child in [child for child in self.textlayout.children]:
@@ -566,9 +364,10 @@ class MainWindow(Screen):
 		data.Close(c)
 		cnt = 0
 		while cnt < len(List):
-			print (cnt)
-			self.textlayout.add_widget(Button(text='Saved Entry: ' + str(IPS[cnt][0]), id=str(cnt), on_press=self.pressed))
-			self.xtextlayout.add_widget(Button(text='X', on_press=self.Delete, id=str(cnt)))
+			print (KEYS[cnt])
+			if not str(KEYS[cnt]) == "('None',)":
+				self.textlayout.add_widget(Button(text='Saved Entry: ' + str(IPS[cnt][0]), id=str(cnt), on_press=self.pressed))
+				self.xtextlayout.add_widget(Button(text='X', on_press=self.Delete, id=str(cnt)))
 			cnt += 1
 		return
 				
@@ -579,20 +378,36 @@ class MainWindow(Screen):
 		ip = self.ipinput.text
 		ReqHeader = {'User-Agent': 'Hydrus Utilize - Mobile'}
 		try:
-			r = requests.get('http://' + self.ipinput.text + ':45869' + '/request_new_permissions?name=Hydrus%20Mobile%20App&basic_permissions=[0,1,2,3,4]', headers=ReqHeader)
-		except:
-			makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Is it on or configured correctly?')
+			r = UrlRequest('http://' + self.ipinput.text + ':45869' + '/request_new_permissions?name=Hydrus%20Mobile%20App&basic_permissions=[0,1,2,3,4]', req_headers=ReqHeader, on_success=MainWindow.connectContinue, timeout=5, on_failure=MainWindow.connectFailure, on_error=MainWindow.connectError)
+			#print ('r',r)
+			#r = requests.get('http://' + self.ipinput.text + ':45869' + '/request_new_permissions?name=Hydrus%20Mobile%20App&basic_permissions=[0,1,2,3,4]', headers=ReqHeader)
+		#except:
+		except Exception as e: 
+			makepopup('Tell DEV THIS MW CON.',str(type(e)) + str(e) + ' ' + str(e.args))
 			return
-		if r.content[0] != 84:
-			r = json.loads(r.content)
-			access_key = r['access_key']
-			txtlst = ['main', '1', '2', '3', '4']
+	
+	# Client Isnt accepting any new Connections
+	def connectFailure(self, *args):
+		makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Please goto  Services->Review->Client-API \n Click Add -> From API request and try again.')
+		return
+	# Issue making connection to server either IP or firewall misconfigured
+	def connectError(self, *args):
+		makepopup('Connection Failure','ERROR CANT \n CONNECT TO SERVER')
+		return
+	# Connection From connect was good, This node parses and writes valid info into local database.
+	def connectContinue(self,*args):
+		print (args[0])
+		if args[0] != 84: # Old error checking code, just leaving it in case...
+			access_key = args[0].get("access_key")
 			c = data('Everything.db')
-			data.Write(c, str(self.ipinput.text), access_key)
+			urlString = str(self.url).split('/', 5)[2]
+			urlString = str(urlString).split(':', 2)[0]
+			data.Write(c, str(urlString), access_key)
 			data.Close(c)
 		else:
-			makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Please goto  Services->Review->Client-API \n Click Add -> From API request and try again.')
+			makepopup('ConnectContinue', 'Error Unknown PassTrough')
 			return
+
 		# Makes the screen transition towards the second screen
 		sm.current='second'
 		sm.transition.direction = 'up'
@@ -604,11 +419,10 @@ class MainWindow(Screen):
 		List = cur.execute("select * from StoredData").fetchall() # Connects To Everything.db and pulls IP's and ther accesskeys
 		IPS = cur.execute("select IP from StoredData").fetchall()
 		KEYS = cur.execute("select Key from StoredData").fetchall()
-		key = str(KEYS[NumDelete][0])
+		key = str(KEYS[int(instance.id)][0])
 		cur.execute("DELETE FROM StoredData WHERE Key = (?)", (str(KEYS[int(instance.id)][0]),))
 		data.dbcommit(c)
 		data.Close(c)
-
 		self.textlayout.clear_widgets(children=None)
 		MainWindow.readtxt(self)
 
@@ -631,7 +445,8 @@ class MainWindow(Screen):
 		except:
 			makepopup('Failed to connect', 'Failed to make connection to Hydrus Client \n Please check if API KEY is valid \n Hydrus keys expire every 24 hrs')
 			return
-		if r.text == 'Did not find an entry for that access key!':
+		print ('r',r)
+		if r == 'Did not find an entry for that access key!':
 			return
 		if r == None:
 			return
@@ -658,7 +473,10 @@ class SecondWindow(Screen):
 	label_size = int(15)
 	LocalFiles = []
 	listdl = []
+	SettingsWindow.reloadSettings('BEANS')
+	settings = settingsList
 
+	#print ('loaded list',loadedsettingsList[2][0])
 	def triggerexit(self, event):
 		global StopThreads
 		global ThreadList
@@ -678,11 +496,16 @@ class SecondWindow(Screen):
 			if self.Offset != 0:
 				self.Offset -= 1
 				SecondWindow.ClearAndUpdateGrid(self)
+				self.DLoader.cnt = 0
 		if str(event) == 'Right':
 			gtrthen = self.Offset + 1
-			if len(self.listdl) > gtrthen * 50:
-				self.Offset += 1
-				SecondWindow.ClearAndUpdateGrid(self)
+
+			if SecondWindow.childs[0].source != 'imgs/bk.png': # Stops User from going right until their page is filled
+
+				if len(self.listdl) > gtrthen * 50:
+					self.Offset += 1
+					SecondWindow.ClearAndUpdateGrid(self)
+					self.DLoader.cnt = 0
 
 	def ClearAndUpdateGrid(self):
 		global ThreadList
@@ -733,8 +556,12 @@ class SecondWindow(Screen):
 
 	def FileDisplay(self, *kwargs):
 		## Waits till LocalFiles files are populated
+		#self.LocalFiles = [int(os.path.splitext(filename)[0]) for filename in os.listdir('tmp/')]
+
 		while not self.LocalFiles:
+			print ('no local files')
 			time.sleep(.5)
+		print ('LENGTH LOCAL FILES', self.LocalFiles)
 		print ('BREAK')
 		cnt = 0
 		valid = True
@@ -759,7 +586,6 @@ class SecondWindow(Screen):
 		print ('gridimgsupdateimage')
 		cnt = 0
 		valid = True
-		
 		#TODO CHECK IF THE UPDATED ITEMS ARE ALREADY IN THE LIST OF SOURCES
 		#NON ESSENTIAL WILL FIX LATER
 		cnt = 0
@@ -773,18 +599,16 @@ class SecondWindow(Screen):
 				SecondWindow.UpdateImage('tmp/'+str(one)+'.thumbnail',cnt)	
 				#print ('set Child Source')
 				valid = False
-			
 			cnt += 1
 
 	def FileSearch(self, *kwargs):
+		global access_key
 		self.ids.searching.size_hint = (1, 1)
 		print (str(SecondWindow.ptags))
 		r = freeconnect(ip, 'get_files/search_files?', access_key, '&tags=' + SecondWindow.ptags, False)
 		self.searching.size_hint = (0, 0)
 		self.ConnSuccessful = True
-		print ('r.done')
-		r = r.json()
-		List = r['file_ids']
+		List = r.result.get("file_ids")
 		if len(List) == 0:
 			return
 		print (str(len(List)))
@@ -793,13 +617,15 @@ class SecondWindow(Screen):
 		self.update_label_text('1', num)
 		SecondWindow.three = str(len(List))
 		CurrentFiles = [int(os.path.splitext(filename)[0]) for filename in os.listdir('tmp/')]
-		CurrentFiles = [x for x in CurrentFiles if x in List]
+		CurrentFiles = [x for x in CurrentFiles if x in List] # Seperates files that we have locally, doesn't allow other files from other searches to get inside.
 		self.LocalFiles = CurrentFiles
 		ListToDL = [Files for Files in List if Files not in CurrentFiles]
 		print ('listtodl', ListToDL)
 		temp = [List]
-		FileList = DownloadFiles(SecondWindow, 'get_files/thumbnail?file_id=',ListToDL, SecondWindow.GridImgsUpdateImage, temp, '.thumbnail')
-		self.DLoader = FileList
+		currentOffset = self.Offset
+		FileList = DownloadFiles(SecondWindow, 'get_files/thumbnail?file_id=',ListToDL, SecondWindow.GridImgsUpdateImage, temp, '.thumbnail', currentOffset)
+		#self.DLoader = FileList
+		#print ('DLOADER',DLoader)
 		if not FileList:
 			return
 		cnt = 0	
@@ -834,8 +660,26 @@ class SecondWindow(Screen):
 			self.OneTrigger = False
 
 	def load_content(self): # Used for drawing Images
+		global settingsList
+
 		maingrid = self.maingrid
 		cnt = 0
+		# Waits till settingsList is populated
+		while not settingsList:
+			print ('load content')
+			SettingsWindow.reloadSettings('BEANS')
+
+			time.sleep(.5)
+			print ('waiting for settings list')
+		if self.settings != settingsList:
+
+			self.settings = settingsList
+		print ('settingslist', settingsList)
+
+		self.ids.maingrid.clear_widgets(children=None)
+
+		maingrid.cols = settingsList[2][0][0]
+
 		for but in range(50):
 			#maingrid.add_widget(Button(size_hint_y=None, id='GridImgs' + str(cnt),background_normal='imgs/Light.jpg',background_down='imgs/Light.jpg'))
 			#maingrid.add_widget(Image(size_hint_y=None, id='GridImgs' + str(cnt),allow_stretch=True, source='imgs/Light.jpg'))
@@ -858,7 +702,7 @@ class SecondWindow(Screen):
 	def label_change(self, event):
 		self.event = event
 		if self.event == "btn1":
-			self.label.text = 'test'
+			#self.label.text = 'test'
 			return
 		if self.event == "navdrawer":
 			self.navdrawer.opacity = 1
@@ -886,6 +730,8 @@ class SecondWindow(Screen):
 
 #close_navdrawer
 
+Builder.load_file('app.kv')
+
 sm = ScreenManager()
 sm.add_widget(MainWindow(name='main'))
 sm.add_widget(FileView(name='fileviewer'))
@@ -894,8 +740,6 @@ sm.add_widget(SettingsWindow(name='setting'))
 
 
 class MyMainApp(App):
-	search_font_size = int(30)
-
 
 	def on_stop(self):
 		global StopThreads
@@ -903,7 +747,7 @@ class MyMainApp(App):
 		self.root.stop = threading.Event()
 		self.root.stop.set()
 	def build(self):
-	        return sm
+		return sm
 
 
 if __name__ == "__main__":
@@ -911,4 +755,7 @@ if __name__ == "__main__":
 	StopThreads = False
 	global ThreadList
 	ThreadList = []
+	global settingsList
+	settingsList = []
+	
 	MyMainApp().run()

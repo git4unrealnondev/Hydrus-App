@@ -1,0 +1,349 @@
+<MainWindow>:
+	ipinput: IPinput
+	textlayout: textlayout
+	xtextlayout: xtextlayout
+	on_pre_enter:
+		root.readtxt()
+	canvas:
+		Color:
+			rgb: 0,0,0
+		Rectangle:
+			#rgba: 1,1,1,1
+			#source: 'imgs/bk.png'
+			size: self.size
+
+	BoxLayout:
+
+		orientation: 'vertical'
+		background_normal: ''
+		background_color: 0, 1, 0, 1
+
+		
+
+		AnchorLayout:
+			anchor_x: 'center'
+			anchor_y: 'top'
+			padding: [25, 10, 25 ,10]
+
+			GridLayout:
+				size_hint: (.5, .25)
+				cols:1
+				GridLayout:
+
+					cols: 2
+					Label:
+						background_color: (1.0, 0.0, 0.0, 1.0)
+						text: 'IP: '
+					TextInput:
+						id: IPinput
+						text: '127.0.0.1'
+						multiline: False
+				Button:
+
+					text: 'Submit'
+					on_press:
+						root.connect('ipinput')
+
+
+
+
+		GridLayout:
+			cols: 1
+			AnchorLayout:
+				anchor_x: 'center'
+				anchor_y: 'center'
+				padding: [25, 10, 25 ,10]
+				BoxLayout:
+					GridLayout:
+						size_hint: .8, .2
+						id: textlayout
+						cols: 1
+					GridLayout
+						size_hint: .2, .2
+						id: xtextlayout
+						cols: 1
+
+<FileView>:
+	on_pre_enter:
+		root.load_content()
+	imageref: image
+	ScrollView:
+		do_scroll_x: False
+		do_scroll_y: True
+		GridLayout:
+			cols: 1
+			size_hint_y: None
+			height: self.minimum_height
+			row_default_height: '40dp'
+			FileViewImage:
+				size_hint: 1, None
+				width: root.width
+				height: self.width / self.image_ratio
+				size: self.size
+				id: image				
+			BoxLayout:
+
+				Button:
+					text: '<-'
+					on_press:
+						root.Transition('Left')
+				Button:
+					text: 'Back'
+					on_press:
+						app.root.current = 'second'
+						root.manager.transition.direction = 'right'
+				Button:
+					text: '->'
+					on_press:
+						root.Transition('Right')
+			
+<SecondWindow>:
+	label: btn1
+	navdrawer: navdrawer
+	maingrid: maingrid
+	search: Search
+	close_navdrawer: close_navdrawer
+	lbl1: lbl1
+	lbl3: lbl3
+	searching: searching
+	on_pre_enter:
+		root.load_content()
+	BoxLayout:
+		orientation: 'vertical'
+		BoxLayout:
+			orientation: 'horizontal'
+			height: 50
+			size_hint: (1, None)
+			opacity: 1
+			ImageButton:
+				size: self.texture_size
+				size_hint: (None, None)
+				source: 'imgs/Hydrus3Bar.png'
+				on_press:
+					root.label_change('navdrawer')
+			BoxLayout:
+				TextInput:
+					
+					id: Search
+					text: 'Search'
+					font_size: root.label_size
+					multiline: False
+					write_tab: False
+					on_focus:
+						root.on_focus('search')
+		AnchorLayout:
+			anchor_x: 'center'
+			size_hint: (1, .1)
+			BoxLayout:
+				spacing: 20
+				padding: (10,1,10,1)
+				Button:
+					background_color: (0,0,0,0)
+					text: ' <- '
+					on_press:
+						root.IncrementPage('Left')
+				Label:
+					id: lbl1
+					size_hint: (.25,1)
+					text: '0'
+				Label:
+					id: lbl2
+					size_hint: (.25,1)
+					text: '-'
+				Label:
+					id: lbl3
+					size_hint: (.25,1)
+					text: '0'
+				Button:
+					background_color: (0,0,0,0)
+					text: ' -> '
+					on_press:
+						root.IncrementPage('Right')
+
+		ScrollView:
+			size_hint: 1,.8
+			do_scroll_x: False
+			do_scroll_y: True
+			GridLayout:
+				row_default_height: 100
+				height: self.minimum_height
+				size_hint_y: None
+				padding: 5
+				cols: root.settings[2][0][0]
+				spacing: (5,5)
+				id: maingrid
+
+		Button:
+			size_hint: 1,.1
+			id: btn1
+			text: 'Logout'
+			on_release:
+				root.label_change('btn1')
+				app.root.current = 'main'
+				root.manager.transition.direction = 'down'
+
+
+	AnchorLayout:
+		anchor_x: 'center'
+		anchor_y: 'center'
+		id: searching
+		size_hint: (0,0)
+		BoxLayout:
+			size_hint: (.3, .15)
+			canvas:
+				Color:
+					rgba: 74/225, 109/255, 186/255, .8 # Hydrus Blue
+				Rectangle:
+					pos: self.pos
+					size: self.size
+			Button:
+				background_normal: ''
+				background_color: 0,0,0,0
+
+				halign: 'center'
+				text: 'Searching (This Is Static)'
+				
+				
+					
+	FloatLayout:
+		AnchorLayout:
+			anchor_x: 'left'
+			anchor_y: 'center'
+			ScrollView:
+				id: navdrawer
+				size_hint: (0, 1)
+				do_scroll_x: False
+				do_scroll_y: True
+
+                BoxLayout:
+
+                    size_hint: (1, 1)
+                    canvas:
+                        Color:
+                            rgba: 74/225, 109/255, 186/255, .8 # Hydrus Blue
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+                    AnchorLayout:
+                        anchor_y: 'top'
+                        BoxLayout:
+                            size_hint: (1, .75)
+                            orientation: 'vertical'
+                            Button:
+                                size_hint: (1, .1)
+                                text: 'Settings'
+                                on_release:
+                                    app.root.current = 'setting'
+                                    root.manager.transition.direction = 'right'
+                            Button:
+                                size_hint: (1, .1)
+                                text: 'test1'
+                                on_press:
+                            Button:
+                                size_hint: (1, .1)
+                                text: 'test1'
+                                on_press:
+                            Button:
+                                size_hint: (1, .1)
+                                text: 'Exit'
+                                on_press:
+                                    root.triggerexit('exit')
+		AnchorLayout:
+			anchor_x: 'right'
+			anchor_y: 'center'
+			Button:
+				id: close_navdrawer
+				opacity: 0
+				text: 'TEST'
+				size_hint: (0, 1)
+				on_press:
+					root.label_change('close_navdrawer')
+<SettingsWindow>:
+	on_pre_enter:
+		root.load_content()
+	BoxLayout:
+		orientation: 'vertical'
+		BoxLayout:
+			size_hint: (1, None)
+			height: 50
+			orientation: 'horizontal'
+			
+			
+
+			AnchorLayout:
+				anchor_x: 'right'
+				ImageButton:
+					allow_stretch :True
+					keep_ratio: True
+					source: 'imgs/HydrusArrowR.png'
+					on_press:
+						app.root.current = 'second'
+						root.manager.transition.direction = 'left'
+
+
+		ScrollView:
+			size_hint: 1,.8
+			do_scroll_x: False
+			do_scroll_y: True
+			GridLayout:
+				row_default_height: 100
+				height: self.minimum_height
+				size_hint_y: None
+				padding: 5
+				cols: 1
+				spacing: (5,5)
+				id: Scroll
+
+		#ScrollView:
+		#	do_scroll_x: False
+		#	do_scroll_y: True
+		#	size_hint: 1,1
+		#	GridLayout:
+		#		canvas.before:
+		#			Color:
+		#				rgba: 0,1,0,1
+		#			Rectangle:
+		#				pos: self.pos
+		#				size: self.size
+		#		cols: 1
+		#		#row_default_height: 100
+		#		#height: self.minimum_height
+		#		size_hint_y: None
+		#		#size_hint_x: 1
+		#		id: Scroll
+
+<settingsSlider>:
+
+
+
+	BoxLayout:
+
+		pos: root.pos
+		size: root.size
+
+		canvas.before:
+			Color:
+				rgba: 1,0,0,1
+			Rectangle:
+				pos: self.pos
+				size: self.size
+
+	
+		Label:
+			text: root.text 
+
+		Label:
+			text: str(root.SliderValue) 
+
+		BoxLayout:
+			Slider:
+				step: 1
+				min: 0
+				max: 15
+				value: root.key
+				on_touch_up:
+					root.sliderUpdate(self)
+	
+
+	
+
